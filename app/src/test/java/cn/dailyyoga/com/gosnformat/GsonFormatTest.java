@@ -1,7 +1,6 @@
 package cn.dailyyoga.com.gosnformat;
 
 import com.google.gson.Gson;
-import com.google.gson.internal.bind.GsonFormat;
 
 import org.junit.Test;
 
