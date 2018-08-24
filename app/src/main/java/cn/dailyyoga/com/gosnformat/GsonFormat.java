@@ -40,12 +40,14 @@ public class GsonFormat {
                 .registerTypeAdapter(Float.class, new FloatDeserializer())
                 .registerTypeAdapter(double.class, new DoubleDeserializer())
                 .registerTypeAdapter(Double.class, new DoubleDeserializer())
+                .registerTypeAdapter(Boolean.class, new BooleanSerializer())
+                .registerTypeAdapter(boolean.class, new BooleanSerializer())
                 .create();
     }
 
     public static class ObjectTypeAdapterFactory implements TypeAdapterFactory {
         @Override
-        public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+        public <T> TypeAdapter<T> create(Gson gson, final TypeToken<T> type) {
             final TypeAdapter<T> delegate = gson.getDelegateAdapter(this, type);
             final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
             return new TypeAdapter<T>() {
@@ -81,9 +83,10 @@ public class GsonFormat {
         @Override
         public String deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             try {
-                return json.getAsJsonPrimitive().getAsString();
+                String string = json.getAsJsonPrimitive().getAsString();
+                return string == null ? "" : string;
             } catch (Exception e) {
-                e.fillInStackTrace();
+                e.printStackTrace();
                 return "";
             }
         }
@@ -95,7 +98,10 @@ public class GsonFormat {
             if (json.isJsonArray()) {
                 //这里要自己负责解析了
                 Gson newGson = new Gson();
-                return newGson.fromJson(json, typeOfT);
+                List<?> list = newGson.fromJson(json, typeOfT);
+                if (list == null) return Collections.EMPTY_LIST;
+                list.removeAll(Collections.singleton(null));
+                return list;
             } else {
                 //和接口类型不符，返回空List
                 return Collections.EMPTY_LIST;
@@ -109,7 +115,7 @@ public class GsonFormat {
             try {
                 return (int) json.getAsJsonPrimitive().getAsDouble();
             } catch (Exception e) {
-                e.fillInStackTrace();
+                e.printStackTrace();
                 return 0;
             }
         }
@@ -121,7 +127,7 @@ public class GsonFormat {
             try {
                 return (long) json.getAsJsonPrimitive().getAsDouble();
             } catch (Exception e) {
-                e.fillInStackTrace();
+                e.printStackTrace();
                 return 0L;
             }
         }
@@ -133,7 +139,7 @@ public class GsonFormat {
             try {
                 return (float) json.getAsJsonPrimitive().getAsDouble();
             } catch (Exception e) {
-                e.fillInStackTrace();
+                e.printStackTrace();
                 return 0F;
             }
         }
@@ -145,8 +151,24 @@ public class GsonFormat {
             try {
                 return json.getAsJsonPrimitive().getAsDouble();
             } catch (Exception e) {
-                e.fillInStackTrace();
+                e.printStackTrace();
                 return 0D;
+            }
+        }
+    }
+
+    public static class BooleanSerializer implements JsonDeserializer<Boolean> {
+        @Override
+        public Boolean deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            try {
+                if (json.getAsJsonPrimitive().isNumber()) {
+                    return json.getAsJsonPrimitive().getAsDouble() != 0F;
+                } else {
+                    return json.getAsJsonPrimitive().getAsBoolean();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
             }
         }
     }

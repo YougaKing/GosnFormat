@@ -12,18 +12,22 @@ public class User {
     public String name;
     public Avatar avatar;
     public List<String> strings;
+    public boolean isRegister;
+
+
+    public static class Avatar{
+        public String lage;
+        public String small;
+    }
 
     @Override
     public String toString() {
         return "User{" +
                 "age=" + age +
                 ", name='" + name + '\'' +
+                ", avatar=" + avatar +
                 ", strings=" + strings +
+                ", isRegister=" + isRegister +
                 '}';
-    }
-
-    public static class Avatar{
-        public String lage;
-        public String small;
     }
 }
